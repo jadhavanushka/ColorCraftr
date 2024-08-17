@@ -17,3 +17,17 @@ document.addEventListener("DOMContentLoaded", function () {
         colorCountInput.value = currentValue + 1;
     });
 });
+
+
+const fileInput = document.getElementById('file-upload');
+const fileNameDisplay = document.getElementById('file-name');
+
+// Listen for the file input change event
+fileInput.addEventListener('change', (event) => {
+    const file = event.target.files[0];
+    if (file) {
+        fileNameDisplay.textContent = `Selected file: ${file.name}`;
+    } else {
+        fileNameDisplay.textContent = ''; // Clear if no file is selected
+    }
+});
