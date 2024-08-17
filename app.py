@@ -1,56 +1,74 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session
 from colorthief import ColorThief
 import os
-from PIL import Image
+from utils import get_colors_list
 
 app = Flask(__name__)
-
-app.secret_key = 'secret_key'
+app.secret_key = "secret_key"
 
 # Make sure you have a folder to store the uploaded images
-UPLOAD_FOLDER = 'static\\uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = "static/uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
+
+# Default image when the page first loads
+DEFAULT_IMAGE = "static/uploads/default.jpg"
+
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
+
 @app.route("/generate_palette", methods=["GET", "POST"])
 def generatePalette():
     if request.method == "POST":
-        if "file" not in request.files:
-            return redirect(request.url)
-
-        file = request.files["file"]
-        num_colors = int(request.form.get('color-count', 4))
+        file = request.files.get("file")
+        num_colors = int(request.form.get("color-count", 8))
         color_code_format = request.form.get("color-code")
-        
-        print(file, num_colors, color_code_format)
-            
-        # if file.filename == "":
-        #     return redirect(request.url)
 
-        if file:
+        # Check if a new file is uploaded
+        if file and file.filename != "":
             # Save the uploaded image
-            img_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            img_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
             file.save(img_path)
 
-            # Use ColorThief to extract colors
-            color_thief = ColorThief(img_path)
-            palette = color_thief.get_palette(color_count=num_colors)
+            # Store the uploaded image path in the session to reuse later
+            session["last_uploaded_image"] = img_path
+        else:
+            # Use the last uploaded image or the default image if none is available
+            img_path = session.get("last_uploaded_image", DEFAULT_IMAGE)
 
-            # Convert colors to the requested color code format
-            colors_list = []
-            for color in palette:
-                if color_code_format == 'hex':
-                    colors_list.append({"hex": "%02x%02x%02x" % color})
-                elif color_code_format == 'rgb':
-                    colors_list.append({"rgb": f"rgb({color[0]}, {color[1]}, {color[2]})"})
+        # Use ColorThief to extract colors
+        color_thief = ColorThief(img_path)
+        palette = color_thief.get_palette(color_count=num_colors)
 
-            print(colors_list)
-            return render_template("generatePalette.html", colors_list=colors_list, img_url=url_for('static', filename=f'uploads/{file.filename}'))
-    
-    return render_template("generatePalette.html")
+        # Convert colors to the color codes
+        colors_list = get_colors_list(palette)
+
+        return render_template(
+            "generatePalette.html",
+            colors_list=colors_list,
+            code=color_code_format,
+            color_count=num_colors,
+            img_url=session["last_uploaded_image"],
+        )
+
+    # On GET request, use the default image to generate the initial palette
+    img_path = DEFAULT_IMAGE
+    color_thief = ColorThief(img_path)
+    palette = color_thief.get_palette(color_count=8, quality=5)
+    session["last_uploaded_image"] = DEFAULT_IMAGE
+
+    colors_list = get_colors_list(palette)
+
+    return render_template(
+        "generatePalette.html",
+        colors_list=colors_list,
+        code='hex',
+        color_count=8,
+        img_url=session["last_uploaded_image"],
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
