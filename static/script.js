@@ -54,3 +54,35 @@ function copyColorCode(element) {
         copyMessage.classList.add('hidden');
     }, 2000);
 }
+
+
+function saveAsImage() {
+    const colors = document.querySelectorAll('.colors li');
+    const canvas = document.getElementById('colorCanvas');
+    const context = canvas.getContext('2d');
+
+    // Set canvas dimensions
+    const width = 300; // Width of each color rectangle
+    const height = 50; // Height of each color rectangle
+    const padding = 5; // Padding between color rectangles
+    const totalHeight = (height + padding) * colors.length - padding;
+
+    canvas.width = width;
+    canvas.height = totalHeight;
+
+    // Draw each color on the canvas
+    colors.forEach((colorElement, index) => {
+        const color = colorElement.style.backgroundColor;
+        context.fillStyle = color;
+        context.fillRect(0, index * (height + padding), width, height);
+    });
+
+    // Convert canvas to image
+    const image = canvas.toDataURL('image/png');
+
+    // Create a link to download the image
+    const link = document.createElement('a');
+    link.href = image;
+    link.download = 'colors.png';
+    link.click();
+}
