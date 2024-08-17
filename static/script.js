@@ -31,3 +31,26 @@ fileInput.addEventListener('change', (event) => {
         fileNameDisplay.textContent = ''; // Clear if no file is selected
     }
 });
+
+
+function copyColorCode(element) {
+    // Get the color code from the data-color attribute
+    const colorCode = element.getAttribute('data-color');
+
+    // Create a temporary textarea to copy the color code
+    const tempTextarea = document.createElement('textarea');
+    tempTextarea.value = colorCode;
+    document.body.appendChild(tempTextarea);
+    tempTextarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(tempTextarea);
+
+    // Show the success message
+    const copyMessage = document.getElementById('copyMessage');
+    copyMessage.classList.remove('hidden');
+
+    // Hide the message after 2 seconds
+    setTimeout(() => {
+        copyMessage.classList.add('hidden');
+    }, 2000);
+}

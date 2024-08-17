@@ -43,10 +43,10 @@
 
                 <div class="sm:col-span-3 mb-6 flex gap-4 items-start">
                     <div class="flex-1">
-                        <label for="color-code" class="block text-sm font-medium leading-6 text-gray-900">Color code</label>
+                        <label for="color-code" class="block text-sm font-medium leading-6 text-gray-900">Color
+                            code</label>
                         <div class="mt-2">
-                            <select id="color-code" name="color-code" autocomplete="color-code"
-                                class="block w-full rounded border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset 
+                            <select id="color-code" name="color-code" autocomplete="color-code" class="block w-full rounded border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset 
                                 focus:ring-purple-600 sm:max-w-xs sm:text-sm sm:leading-6">
                                 <option value="hex" {% if code=='hex' %}selected{% endif %}>Hex</option>
                                 <option value="rgb" {% if code=='rgb' %}selected{% endif %}>RGB</option>
@@ -57,7 +57,8 @@
                     </div>
 
                     <div class="">
-                        <label for="color-count" class="block text-sm font-medium leading-6 text-gray-900">Color count</label>
+                        <label for="color-count" class="block text-sm font-medium leading-6 text-gray-900">Color
+                            count</label>
                         <div class="h-10 w-28 bg-gray-50 flex border border-gray-300 rounded items-center mt-2">
                             <!-- Decrement button -->
                             <button type="button" id="decrease-count"
@@ -99,13 +100,14 @@
             <ul class="colors flex flex-col mt-4">
                 {% if colors_list %}
                 {% for color in colors_list %}
-                <li style="background-color: #{{ color.hex }};" class="w-full h-12 flex justify-center items-center">
+                <li style="background-color: #{{ color.hex }};"
+                    class="w-full h-12 flex justify-center items-center cursor-pointer" data-color="{{ color[code] }}"
+                    onclick="copyColorCode(this)" title="Click to copy">
                     <span class="text-white text-xs text-center">{{ color[code] }}</span>
                 </li>
                 {% endfor %}
                 {% endif %}
             </ul>
-
         </div>
     </form>
 
