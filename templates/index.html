@@ -1,0 +1,19 @@
+{% extends 'layout.html' %}
+
+{% block title %}ColorCraftr{% endblock %}
+
+{% block content %}
+
+<div class="my-12">
+    <h1 class="text-6xl font-bold mb-4">Welcome to ColorCraftr</h1>
+    <p class="text-xl mb-8">Your go-to tool for generating color palettes and more!</p>
+
+    <a href="{{ url_for('generatePalette') }}">
+        <button
+            class="px-6 py-3 text-white font-medium rounded bg-purple-600 hover:bg-purple-700 transition ease-in-out duration-300">
+            Generate palette
+        </button>
+    </a>
+</div>
+
+{% endblock %}
