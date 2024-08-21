@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, g, render_template, request, redirect, url_for, session
 from colorthief import ColorThief
 import os
-from utils import get_colors_list
+import sqlite3
+from utils import get_colors_list, find_similar_colors
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -12,6 +13,31 @@ app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Default image when the page first loads
 DEFAULT_IMAGE = "static/uploads/default.jpg"
+
+# Path to SQLite database file
+DATABASE = "colors.db"
+
+
+def get_db():
+    # Opens a connection to the SQLite database
+    db = getattr(g, "_database", None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+
+def query_db(query, args=(), one=False):
+    cur = get_db().execute(query, args)
+    rv = cur.fetchall()
+    cur.close()
+    return (rv[0] if rv else None) if one else rv
+
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, "_database", None)
+    if db is not None:
+        db.close()
 
 
 @app.route("/")
@@ -64,10 +90,39 @@ def generatePalette():
     return render_template(
         "generatePalette.html",
         colors_list=colors_list,
-        code='hex',
+        code="hex",
         color_count=8,
         img_url=session["last_uploaded_image"],
     )
+
+
+@app.route("/color_library", methods=["GET", "POST"])
+def colorLibrary():
+    search_text = ""
+    order_by = "hsvValue" 
+    similar_colors = []
+
+    if request.method == "POST":
+        search_text = request.form.get("search_text").strip().strip("#")
+        order_by = request.form.get(
+            "order_by", "hsvValue"
+        )  
+        
+        # Check if the search input is a valid hex code
+        if len(search_text) == 6 and all(c in "0123456789ABCDEFabcdef" for c in search_text):
+            # Search by Hex and find similar colors
+            colors_data = query_db(
+                f"SELECT Name, Hex FROM colors ORDER BY {order_by} DESC"
+            )
+            similar_colors = find_similar_colors(search_text, colors_data)
+
+    # Prepare the SQL query with the search text and dynamic order by condition
+    query = f"SELECT Name, Hex FROM colors WHERE Name LIKE ? OR Hex LIKE ? ORDER BY {order_by} DESC"
+    data = query_db(query, ("%" + search_text + "%", "%" + search_text + "%"))
+    
+    data += similar_colors
+    
+    return render_template("colorLibrary.html", colors_list=data, search_text=search_text)
 
 
 if __name__ == "__main__":

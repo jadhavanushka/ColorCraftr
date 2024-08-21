@@ -31,6 +31,11 @@ def rgb_to_hex(color):
     return "%02x%02x%02x" % color
 
 
+def hex_to_rgb(hex_color):
+    hex_color = hex_color.lstrip("#")
+    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+
+
 def get_colors_list(palette):
     colors_list = []
     for color in palette:
@@ -43,3 +48,33 @@ def get_colors_list(palette):
         }
         colors_list.append(color_info)
     return colors_list
+
+
+def calculate_color_distance(color1_hex, color2_hex):
+    # Convert hex to RGB
+    color1_rgb = hex_to_rgb(color1_hex)
+    color2_rgb = hex_to_rgb(color2_hex)
+
+    # Calculate Euclidean distance in RGB space
+    distance = (
+        (color2_rgb[0] - color1_rgb[0]) ** 2
+        + (color2_rgb[1] - color1_rgb[1]) ** 2
+        + (color2_rgb[2] - color1_rgb[2]) ** 2
+    ) ** 0.5
+
+    return distance
+
+
+def find_similar_colors(target_color_hex, color_list):
+    color_distances = []
+
+    for color_name, color_hex in color_list:
+        distance = calculate_color_distance(target_color_hex, color_hex)
+        if distance > 0:
+            color_distances.append((color_name, color_hex, distance))
+
+    # Sort by the smallest distance
+    sorted_colors = sorted(color_distances, key=lambda x: x[2])
+
+    # Return the top closest colors
+    return sorted_colors[:25]
