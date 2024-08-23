@@ -14,7 +14,7 @@ app = Flask(__name__)
 app.secret_key = "secret_key"
 
 # Make sure you have a folder to store the uploaded images
-UPLOAD_FOLDER = "/persistent/uploads"
+UPLOAD_FOLDER = "static/uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Default image when the page first loads
