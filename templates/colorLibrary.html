@@ -4,13 +4,16 @@
 {% block content %}
 
 <div class="flex flex-col items-center my-4">
-    <h1 class="text-4xl font-bold mb-2">Explore Hues</h1>
-    <p class="text-md text-gray-600 mb-6">Your Ultimate Resource for Color Inspiration</p>
+    <h1 class="text-4xl font-bold mb-2 text-slate-800">Explore Hues</h1>
+    <p class="text-md text-gray-500 mb-6">Your Ultimate Resource for Color Inspiration</p>
 </div>
 
-<form action="/color_library" method="POST" enctype="multipart/form-data" class="w-full mt-3 flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
+<form action="/color_library" method="POST" enctype="multipart/form-data"
+    class="w-full mt-3 flex flex-col md:flex-row justify-center items-center space-y-4 md:space-y-0 md:space-x-4 mb-6">
     <!-- Order by -->
-    <select name="order_by" class="block w-full md:w-48 rounded border border-gray-300 py-3 px-6 pl-4 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm" required>
+    <select name="order_by"
+        class="block w-full md:w-48 rounded border border-purple-100 py-3 px-6 pl-4 pr-10 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+        required>
         <option value="select" disabled>Order by</option>
         <option value="hsvValue" {% if request.form['order_by']=="hsvValue" %} selected {% endif %}>Value</option>
         <option value="hslSatur" {% if request.form['order_by']=="hslSatur" %} selected {% endif %}>Saturation</option>
@@ -18,17 +21,21 @@
     </select>
 
     <!-- Search Input -->
-    <input class="block w-full md:w-64 rounded border border-gray-300 py-3 pl-4 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm" type="text" name="search_text" autocomplete="off"
-           placeholder="Search color by name or hexcode" value="{{ search_text if search_text }}">
+    <input
+        class="block w-full md:w-64 rounded border border-purple-100 py-3 pl-4 text-base focus:border-purple-500 focus:outline-none focus:ring-purple-500 sm:text-sm"
+        type="text" name="search_text" autocomplete="off" placeholder="Search color by name or hexcode"
+        value="{{ search_text if search_text }}">
 
     <!-- Submit Button -->
-    <button type="submit" class="inline-block w-28 px-6 py-2.5 text-white font-medium rounded bg-purple-600 hover:bg-purple-700 transition ease-in-out duration-300">
+    <button type="submit"
+        class="inline-block w-28 px-6 py-2.5 text-white font-medium rounded bg-purple-600 hover:bg-purple-700 transition ease-in-out duration-300">
         Search
     </button>
 
     <!-- Reset Button -->
     <a href="{{ url_for('colorLibrary') }}">
-        <button type="button" class="w-28 inline-block text-purple-600 border-purple-700 border bg-white py-2.5 px-6 rounded font-medium hover:bg-purple-50 transition ease-in-out duration-300">
+        <button type="button"
+            class="w-28 inline-block py-2.5 px-6 rounded font-medium text-purple-900 border-purple-200 border bg-purple-100 py-3 px-6 rounded font-medium hover:bg-purple-200 transition ease-in-out duration-300">
             Reset
         </button>
     </a>
@@ -38,10 +45,10 @@
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
     {% for color in colors_list %}
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
+    <div class="bg-white shadow-md shadow-purple-100 rounded-lg overflow-hidden hover:shadow-purple-200">
         <!-- Access color by tuple index -->
-        <div class="w-full h-36 cursor-pointer" style="background-color: {{ color[1] }};" title="Click to copy" data-color="{{ color[1] }}"
-        onclick="copyColorCode(this)"></div>
+        <div class="w-full h-36 cursor-pointer" style="background-color: {{ color[1] }};" title="Click to copy"
+            data-color="{{ color[1] }}" onclick="copyColorCode(this)"></div>
         <div class="p-4 flex justify-between items-center">
             <h5 class="text-lg font-semibold">{{ color[0] }}</h5> <!-- color name -->
             <p class="text-sm text-gray-500">{{ color[1] }}</p> <!-- hex code -->
