@@ -184,7 +184,3 @@ def guessHex():
         result=result,
         guessed_color=guessed_color,
     )
-
-
-if __name__ == "__main__":
-    app.run(debug=True)
