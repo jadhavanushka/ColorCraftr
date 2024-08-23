@@ -1,3 +1,6 @@
+import random
+
+
 def rgb_to_cmyk(r, g, b):
     r, g, b = r / 255.0, g / 255.0, b / 255.0
     k = 1 - max(r, g, b)
@@ -33,7 +36,10 @@ def rgb_to_hex(color):
 
 def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip("#")
-    return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    if len(hex_color) == 6:
+        return tuple(int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+    else:
+        return None  # Invalid hex
 
 
 def get_colors_list(palette):
@@ -78,3 +84,13 @@ def find_similar_colors(target_color_hex, color_list):
 
     # Return the top closest colors
     return sorted_colors[:25]
+
+
+def generate_random_hex():
+    return "#{:06x}".format(random.randint(0, 0xFFFFFF))
+
+
+def calculate_accuracy(distance):
+    max_distance = (255**2 + 255**2 + 255**2) ** 0.5  # Maximum RGB distance
+    accuracy = max(0, 100 * (1 - (distance / max_distance)))
+    return accuracy

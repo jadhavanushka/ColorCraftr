@@ -2,7 +2,13 @@ from flask import Flask, g, render_template, request, redirect, url_for, session
 from colorthief import ColorThief
 import os
 import sqlite3
-from utils import get_colors_list, find_similar_colors
+from utils import (
+    get_colors_list,
+    find_similar_colors,
+    generate_random_hex,
+    calculate_color_distance,
+    calculate_accuracy,
+)
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
@@ -99,17 +105,17 @@ def generatePalette():
 @app.route("/color_library", methods=["GET", "POST"])
 def colorLibrary():
     search_text = ""
-    order_by = "hsvValue" 
+    order_by = "hsvValue"
     similar_colors = []
 
     if request.method == "POST":
         search_text = request.form.get("search_text").strip().strip("#")
-        order_by = request.form.get(
-            "order_by", "hsvValue"
-        )  
-        
+        order_by = request.form.get("order_by", "hsvValue")
+
         # Check if the search input is a valid hex code
-        if len(search_text) == 6 and all(c in "0123456789ABCDEFabcdef" for c in search_text):
+        if len(search_text) == 6 and all(
+            c in "0123456789ABCDEFabcdef" for c in search_text
+        ):
             # Search by Hex and find similar colors
             colors_data = query_db(
                 f"SELECT Name, Hex FROM colors ORDER BY {order_by} DESC"
@@ -119,10 +125,65 @@ def colorLibrary():
     # Prepare the SQL query with the search text and dynamic order by condition
     query = f"SELECT Name, Hex FROM colors WHERE Name LIKE ? OR Hex LIKE ? ORDER BY {order_by} DESC"
     data = query_db(query, ("%" + search_text + "%", "%" + search_text + "%"))
-    
+
     data += similar_colors
-    
-    return render_template("colorLibrary.html", colors_list=data, search_text=search_text)
+
+    return render_template(
+        "colorLibrary.html", colors_list=data, search_text=search_text
+    )
+
+
+@app.route("/guess_hex", methods=["GET", "POST"])
+def guessHex():
+    if "random_hex" not in session:
+        session["random_hex"] = generate_random_hex()
+
+    random_hex = session["random_hex"]
+    result = None
+    guessed_color = None
+
+    if "score" not in session:
+        session["score"] = 0
+
+    if request.method == "POST":
+        action = request.form.get("action")
+
+        if action == "restart":
+            session["score"] = 0
+            session.pop("random_hex", None)  # Reset the color
+            return redirect(url_for("guessHex"))
+
+        elif action == "next_color":
+            # Generate a new random color
+            session["random_hex"] = generate_random_hex()
+            return redirect(url_for("guessHex"))
+
+        guess = request.form.get("guess").strip().strip("#").lower()
+        answer = request.form.get("answer").strip().strip("#").lower()
+
+        # Check if the input is a valid hex code
+        if len(guess) == 6 and all(c in "0123456789ABCDEFabcdef" for c in guess):
+            guessed_color = guess
+            
+            # Calculate the color distance and update the score
+            distance = calculate_color_distance(guess, answer)
+            accuracy = calculate_accuracy(distance)
+
+            if accuracy > 75:
+                session["score"] += int(accuracy)
+
+            result = f"{accuracy:.2f}% accurate"
+            
+        else:
+            result = "Invalid hex"
+
+    return render_template(
+        "guessHex.html",
+        random_hex=session["random_hex"],
+        score=session["score"],
+        result=result,
+        guessed_color=guessed_color,
+    )
 
 
 if __name__ == "__main__":
