@@ -1,7 +1,14 @@
 from flask import Flask, g, render_template, request, redirect, url_for, session
 from colorthief import ColorThief
+from datetime import timedelta
+from google.cloud import storage
+from dotenv import load_dotenv
+import io
 import os
+from PIL import Image
+import requests
 import sqlite3
+import tempfile
 from utils import (
     get_colors_list,
     find_similar_colors,
@@ -13,8 +20,28 @@ from utils import (
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
+load_dotenv()
+
+# Read the JSON credentials from an environment variable
+google_credentials_content = os.getenv("GOOGLE_APPLICATION_CREDENTIALS_CONTENT")
+
+if google_credentials_content:
+    # Create a temporary file for Google Cloud credentials
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".json") as temp_file:
+        temp_file.write(google_credentials_content.encode("utf-8"))
+        google_credentials_path = temp_file.name
+
+    # Set the Google Cloud credentials using the temporary file
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = google_credentials_path
+else:
+    raise EnvironmentError(
+        "GOOGLE_APPLICATION_CREDENTIALS_CONTENT environment variable is not set."
+    )
+
+
 # Make sure you have a folder to store the uploaded images
 UPLOAD_FOLDER = "static/uploads"
+BUCKET_NAME = "color-craftr-uploads"
 app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Default image when the page first loads
@@ -22,6 +49,35 @@ DEFAULT_IMAGE = "static/uploads/default.jpg"
 
 # Path to SQLite database file
 DATABASE = "colors.db"
+
+
+# upload the file's content to Google Cloud Storage
+def upload_to_gcs(file, bucket_name, destination_blob_name):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(destination_blob_name)
+    blob.upload_from_file(file)
+    return destination_blob_name
+
+
+# Generate a signed URL for the blob
+def generate_signed_url(bucket_name, blob_name, expiration_time=900):
+    storage_client = storage.Client()
+    bucket = storage_client.bucket(bucket_name)
+    blob = bucket.blob(blob_name)
+    url = blob.generate_signed_url(
+        version="v4",
+        expiration=timedelta(seconds=expiration_time),
+        method="GET",
+    )
+    return url
+
+
+def get_image_from_signed_url(signed_url):
+    response = requests.get(signed_url)
+    response.raise_for_status()  # Ensure the request was successful
+    img_data = io.BytesIO(response.content)  # Keep the image in memory
+    return Image.open(img_data)  # Return an in-memory image
 
 
 def get_db():
@@ -60,18 +116,31 @@ def generatePalette():
 
         # Check if a new file is uploaded
         if file and file.filename != "":
-            # Save the uploaded image
-            img_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-            file.save(img_path)
-
-            # Store the uploaded image path in the session to reuse later
-            session["last_uploaded_image"] = img_path
+            destination_blob_name = f"uploads/{file.filename}"
+            img_path = upload_to_gcs(file, BUCKET_NAME, destination_blob_name)
+            session["last_uploaded_image"] = (img_path)
         else:
             # Use the last uploaded image or the default image if none is available
             img_path = session.get("last_uploaded_image", DEFAULT_IMAGE)
 
-        # Use ColorThief to extract colors
-        color_thief = ColorThief(img_path)
+        # Generate a signed URL only for uploaded images
+        if img_path != DEFAULT_IMAGE:
+            signed_url = generate_signed_url(BUCKET_NAME, img_path, expiration_time=900)
+            img_url = signed_url
+            # Fetch the image from the signed URL and keep it in memory
+            image = get_image_from_signed_url(signed_url)
+
+            # Use ColorThief on the in-memory image
+            img_byte_array = io.BytesIO()
+            image.save(img_byte_array, format="JPEG")
+            img_byte_array.seek(0)  # Move back to the start of the in-memory file
+
+            color_thief = ColorThief(img_byte_array)  # Use in-memory image with ColorThief
+
+        else:
+            img_url = img_path
+            color_thief = ColorThief(img_path)
+
         palette = color_thief.get_palette(color_count=num_colors)
 
         # Convert colors to the color codes
@@ -82,7 +151,7 @@ def generatePalette():
             colors_list=colors_list,
             code=color_code_format,
             color_count=num_colors,
-            img_url=session["last_uploaded_image"],
+            img_url=img_url,
         )
 
     # On GET request, use the default image to generate the initial palette
@@ -164,7 +233,7 @@ def guessHex():
         # Check if the input is a valid hex code
         if len(guess) == 6 and all(c in "0123456789ABCDEFabcdef" for c in guess):
             guessed_color = guess
-            
+
             # Calculate the color distance and update the score
             distance = calculate_color_distance(guess, answer)
             accuracy = calculate_accuracy(distance)
@@ -173,7 +242,7 @@ def guessHex():
                 session["score"] += int(accuracy)
 
             result = f"{accuracy:.2f}% accurate"
-            
+
         else:
             result = "Invalid hex"
 
