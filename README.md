@@ -57,7 +57,7 @@ ColorCraftr is a web application for generating color palettes, exploring color 
 
 ## Deployment
 
-The app is deployed on Vercel Make sure to set up the following environment variables in the Vercel dashboard:
+The app is deployed on Vercel Make sure to set up the following environment variable in the Vercel dashboard:
 
 - `GOOGLE_APPLICATION_CREDENTIALS_CONTENT`: Set the Google Cloud credentials json object.
 
@@ -65,5 +65,5 @@ Ensure that your SQLite `.db` file is properly connected when deploying on Verce
 
 ## Acknowledgments
 
-[ColorThief](https://github.com/lokesh/color-thief-python) for color extraction.
-[Google Cloud](https://cloud.google.com/) for cloud storage and database services.
+- [ColorThief](https://github.com/lokesh/color-thief-python) for color extraction.
+- [Google Cloud](https://cloud.google.com/) for cloud storage and database services.
