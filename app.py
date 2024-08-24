@@ -118,24 +118,34 @@ def generatePalette():
         if file and file.filename != "":
             destination_blob_name = f"uploads/{file.filename}"
             img_path = upload_to_gcs(file, BUCKET_NAME, destination_blob_name)
-            session["last_uploaded_image"] = (img_path)
+            session["last_uploaded_image"] = img_path
         else:
             # Use the last uploaded image or the default image if none is available
             img_path = session.get("last_uploaded_image", DEFAULT_IMAGE)
 
-        # Generate a signed URL only for uploaded images
+        # Generate a signed URL for the uploaded image
         if img_path != DEFAULT_IMAGE:
             signed_url = generate_signed_url(BUCKET_NAME, img_path, expiration_time=900)
             img_url = signed_url
+
             # Fetch the image from the signed URL and keep it in memory
             image = get_image_from_signed_url(signed_url)
 
-            # Use ColorThief on the in-memory image
+            # Convert the image to RGB if it has an alpha channel
+            if image.mode in ("RGBA", "LA") or (
+                image.mode == "P" and "transparency" in image.info
+            ):
+                image = image.convert("RGB")
+
+            # Save the image to an in-memory file
             img_byte_array = io.BytesIO()
-            image.save(img_byte_array, format="JPEG")
+            image.save(img_byte_array, format="PNG")  # Use PNG format for compatibility
             img_byte_array.seek(0)  # Move back to the start of the in-memory file
 
-            color_thief = ColorThief(img_byte_array)  # Use in-memory image with ColorThief
+            # Use ColorThief on the in-memory image
+            color_thief = ColorThief(
+                img_byte_array
+            )  # Use in-memory image with ColorThief
 
         else:
             img_url = img_path
