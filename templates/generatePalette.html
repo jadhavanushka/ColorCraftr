@@ -4,13 +4,13 @@
 
 {% block content %}
 
-<div class="flex flex-col items-center my-4">
-    <h1 class="text-4xl font-bold mb-2 text-slate-800">Palette generator</h1>
-    <p class="text-md text-gray-500 mb-6">Upload an image to get a color palette</p>
+<div class="flex flex-col items-center md:my-4 text-center">
+    <h1 class="text-2xl md:text-4xl font-bold md:mb-2 text-slate-800">Palette generator</h1>
+    <p class="text-md text-gray-500 mb-3 md:mb-6">Upload an image to get a color palette</p>
 </div>
 
 <div class="my-4 flex gap-6 flex-col lg:flex-row">
-    <form class="w-full lg:w-2/5 bg-white rounded-lg px-8 py-6 shadow-lg shadow-purple-100" method="post" action="/generate_palette"
+    <form class="w-full lg:w-2/5 bg-white rounded-lg px-4 py-3 md:px-8 md:py-6 shadow-lg shadow-purple-100" method="post" action="/generate_palette"
         enctype="multipart/form-data">
         <div class="space-y-5">
             <div class="border-b border-gray-900/10 pb-4">

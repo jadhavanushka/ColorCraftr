@@ -3,9 +3,9 @@
 
 {% block content %}
 
-<div class="flex flex-col items-center my-4">
-    <h1 class="text-4xl font-bold mb-2 text-slate-800">Explore Hues</h1>
-    <p class="text-md text-gray-500 mb-6">Your Ultimate Resource for Color Inspiration</p>
+<div class="flex flex-col items-center md:my-4 text-center">
+    <h1 class="text-2xl md:text-4xl font-bold md:mb-2 text-slate-800">Explore Hues</h1>
+    <p class="text-md text-gray-500 mb-3 md:mb-6">Your Ultimate Resource for Color Inspiration</p>
 </div>
 
 <form action="/color_library" method="POST" enctype="multipart/form-data"
@@ -26,19 +26,21 @@
         type="text" name="search_text" autocomplete="off" placeholder="Search color by name or hexcode"
         value="{{ search_text if search_text }}">
 
-    <!-- Submit Button -->
-    <button type="submit"
-        class="inline-block w-28 px-6 py-2.5 text-white font-medium rounded bg-purple-600 hover:bg-purple-700 transition ease-in-out duration-300">
-        Search
-    </button>
-
-    <!-- Reset Button -->
-    <a href="{{ url_for('colorLibrary') }}">
-        <button type="button"
-            class="w-28 inline-block py-2.5 px-6 rounded font-medium text-purple-900 border-purple-200 border bg-purple-100 py-3 px-6 rounded font-medium hover:bg-purple-200 transition ease-in-out duration-300">
-            Reset
+    <div class="flex space-x-2 md:space-x-4">
+        <!-- Submit Button -->
+        <button type="submit"
+            class="inline-block w-28 px-6 py-2.5 text-white font-medium rounded bg-purple-600 hover:bg-purple-700 transition ease-in-out duration-300">
+            Search
         </button>
-    </a>
+
+        <!-- Reset Button -->
+        <a href="{{ url_for('colorLibrary') }}">
+            <button type="button"
+                class="w-28 inline-block py-2.5 px-6 rounded font-medium text-purple-900 border-purple-200 border bg-purple-100 py-3 px-6 rounded font-medium hover:bg-purple-200 transition ease-in-out duration-300">
+                Reset
+            </button>
+        </a>
+    </div>
 </form>
 
 <hr class="my-6">
