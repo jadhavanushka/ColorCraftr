@@ -1,6 +1,6 @@
 # ColorCraftr
 
-ColorCraftr is a web application for generating color palettes, exploring color libraries, and playing a hex color guessing game. Users can upload an image to generate a palette of dominant colors, search and explore colors, and test their color knowledge with a fun guessing game. Check out the site [here](color-craftr.vercel.app).
+ColorCraftr is a web application for generating color palettes, exploring color libraries, and playing a hex color guessing game. Users can upload an image to generate a palette of dominant colors, search and explore colors, and test their color knowledge with a fun guessing game. Check out the site [here](https://color-craftr.vercel.app).
 
 ## Features
 
