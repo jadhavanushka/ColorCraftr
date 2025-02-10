@@ -1,4 +1,83 @@
 import random
+import sqlite3
+from flask import g
+import io
+from werkzeug.utils import secure_filename
+
+DATABASE = "color_craftr.db"
+ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg"}
+DEFAULT_IMAGE = "default.jpg"
+
+
+def get_db():
+    # Opens a connection to the SQLite database
+    db = getattr(g, "_database", None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+        db.row_factory = sqlite3.Row
+    return db
+
+
+def query_db(query, args=(), one=False):
+    conn = get_db().execute(query, args)
+    rv = conn.fetchall()
+    conn.close()
+    return (rv[0] if rv else None) if one else rv
+
+
+def allowed_file(filename):
+    # Checks if the uploaded file has an allowed extension.
+    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def save_image(file):
+    # Saves the uploaded image as a BLOB in the database and returns the filename.
+    if not file or not allowed_file(file.filename):
+        return None
+
+    filename = secure_filename(file.filename)
+
+    # Don't save if it's named the same as default image
+    if filename == DEFAULT_IMAGE:
+        return DEFAULT_IMAGE
+
+    delete_previous_image()  # Remove old images
+
+    image_data = file.read()
+
+    conn = get_db()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT OR REPLACE INTO images (filename, image_data) VALUES (?, ?)",
+        (filename, image_data),
+    )
+    conn.commit()
+
+    return filename
+
+
+def delete_previous_image():
+    # Deletes the previously uploaded image from the database (excluding default.jpg).
+    last_uploaded = query_db(
+        "SELECT filename FROM images ORDER BY id DESC LIMIT 1", one=True
+    )
+
+    if last_uploaded and last_uploaded["filename"] != DEFAULT_IMAGE:
+        db = get_db()
+        db.execute(
+            "DELETE FROM images WHERE filename = ?", (last_uploaded["filename"],)
+        )
+        db.commit()
+
+
+def get_image(filename):
+    # Retrieves the image data from the database.
+    image = query_db(
+        "SELECT image_data FROM images WHERE filename = ?", (filename,), one=True
+    )
+    if image:
+        return io.BytesIO(image["image_data"])
+    return None
 
 
 def rgb_to_cmyk(r, g, b):

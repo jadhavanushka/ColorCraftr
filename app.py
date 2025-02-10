@@ -1,54 +1,37 @@
-from flask import Flask, g, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, send_file
 from colorthief import ColorThief
 import os
-import sqlite3
 from utils import (
     get_colors_list,
     find_similar_colors,
     generate_random_hex,
     calculate_color_distance,
     calculate_accuracy,
+    save_image,
+    get_image,
+    query_db,
 )
 
 app = Flask(__name__)
 app.secret_key = "secret_key"
 
-# Make sure you have a folder to store the uploaded images
 UPLOAD_FOLDER = "static/uploads"
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
 # Default image when the page first loads
-DEFAULT_IMAGE = "static/uploads/default.jpg"
-
-# Path to SQLite database file
-DATABASE = "colors.db"
-
-
-def get_db():
-    # Opens a connection to the SQLite database
-    db = getattr(g, "_database", None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-    return db
-
-
-def query_db(query, args=(), one=False):
-    cur = get_db().execute(query, args)
-    rv = cur.fetchall()
-    cur.close()
-    return (rv[0] if rv else None) if one else rv
-
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, "_database", None)
-    if db is not None:
-        db.close()
+DEFAULT_IMAGE = "default.jpg"
 
 
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+@app.route("/images/<filename>")
+def serve_image(filename):
+    """Retrieve and serve images from the database."""
+    image_data = get_image(filename)
+    if image_data:
+        return send_file(image_data, mimetype="image/jpeg")
+    return "Image not found", 404
 
 
 @app.route("/generate_palette", methods=["GET", "POST"])
@@ -57,21 +40,24 @@ def generatePalette():
         file = request.files.get("file")
         num_colors = int(request.form.get("color-count", 8))
         color_code_format = request.form.get("color-code")
+        filename = file.filename
 
         # Check if a new file is uploaded
-        if file and file.filename != "":
-            # Save the uploaded image
-            img_path = os.path.join(app.config["UPLOAD_FOLDER"], file.filename)
-            file.save(img_path)
-
-            # Store the uploaded image path in the session to reuse later
-            session["last_uploaded_image"] = img_path
+        if file and filename != "":
+            filename = save_image(file)  # Save to database
+            session["last_uploaded_image"] = filename  # Update session
         else:
             # Use the last uploaded image or the default image if none is available
-            img_path = session.get("last_uploaded_image", DEFAULT_IMAGE)
+            filename = session.get("last_uploaded_image", DEFAULT_IMAGE)
+
+        # Retrieve image data from database
+        image_data = get_image(filename)
+
+        if image_data is None:
+            return "Error: Image not found in database", 400
 
         # Use ColorThief to extract colors
-        color_thief = ColorThief(img_path)
+        color_thief = ColorThief(image_data)
         palette = color_thief.get_palette(color_count=num_colors)
 
         # Convert colors to the color codes
@@ -82,15 +68,15 @@ def generatePalette():
             colors_list=colors_list,
             code=color_code_format,
             color_count=num_colors,
-            img_url=session["last_uploaded_image"],
+            img_url=url_for("serve_image", filename=filename),
         )
 
     # On GET request, use the default image to generate the initial palette
-    img_path = DEFAULT_IMAGE
-    color_thief = ColorThief(img_path)
-    palette = color_thief.get_palette(color_count=8, quality=5)
+    img_path = os.path.join(UPLOAD_FOLDER, DEFAULT_IMAGE)
     session["last_uploaded_image"] = DEFAULT_IMAGE
 
+    color_thief = ColorThief(img_path)
+    palette = color_thief.get_palette(color_count=8, quality=5)
     colors_list = get_colors_list(palette)
 
     return render_template(
@@ -98,7 +84,7 @@ def generatePalette():
         colors_list=colors_list,
         code="hex",
         color_count=8,
-        img_url=session["last_uploaded_image"],
+        img_url=url_for("serve_image", filename=session["last_uploaded_image"]),
     )
 
 
@@ -164,7 +150,7 @@ def guessHex():
         # Check if the input is a valid hex code
         if len(guess) == 6 and all(c in "0123456789ABCDEFabcdef" for c in guess):
             guessed_color = guess
-            
+
             # Calculate the color distance and update the score
             distance = calculate_color_distance(guess, answer)
             accuracy = calculate_accuracy(distance)
@@ -173,7 +159,7 @@ def guessHex():
                 session["score"] += int(accuracy)
 
             result = f"{accuracy:.2f}% accurate"
-            
+
         else:
             result = "Invalid hex"
 
