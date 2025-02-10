@@ -1,2 +1,6 @@
 Flask 
 colorthief
+google-cloud-storage
+Pillow
+python-dotenv
+requests
