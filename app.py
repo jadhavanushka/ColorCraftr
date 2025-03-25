@@ -12,10 +12,8 @@ from utils import (
     query_db,
 )
 
-
 app = Flask(__name__)
 app.secret_key = "secret_key"
-
 
 UPLOAD_FOLDER = "static/uploads"
 # Default image when the page first loads
@@ -172,3 +170,7 @@ def guessHex():
         result=result,
         guessed_color=guessed_color,
     )
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
