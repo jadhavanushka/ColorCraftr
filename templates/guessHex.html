@@ -3,9 +3,9 @@
 
 {% block content %}
 
-<div class="flex flex-col items-center md:my-4 text-center">
-    <h1 class="text-2xl md:text-4xl font-bold md:mb-2 text-slate-800">Guess Hex</h1>
-    <p class="text-md text-gray-500 mb-3 md:mb-6">Test Your Color IQ!</p>
+<div class="flex flex-col items-center my-4">
+    <h1 class="text-4xl font-bold mb-2 text-slate-800">Guess Hex</h1>
+    <p class="text-md text-gray-500 mb-6">Test Your Color IQ!</p>
 </div>
 
 <div class="flex flex-col justify-center items-center">
@@ -16,14 +16,14 @@
         <div class="flex">
             <div class="w-full h-64 flex items-end justify-center p-4" style="background-color: {{ random_hex }};">
                 {% if guessed_color %}
-                <span class="font-bold px-2 py-1 bg-gray-50 shadow-sm rounded-sm text-sm">
+                <span class="font-bold px-2 py-1 bg-gray-50 shadow-sm rounded-sm">
                     {{random_hex}}
                 </span>
                 {% endif %}
             </div>
             {% if guessed_color %}
             <div class="w-full h-64 flex items-end justify-center p-4" style="background-color: #{{ guessed_color }};">
-                <span class="font-bold px-2 py-1 bg-gray-50 shadow-sm rounded-sm text-sm">
+                <span class="font-bold px-2 py-1 bg-gray-50 shadow-sm rounded-sm">
                     #{{guessed_color}}
                 </span>
             </div>
@@ -32,7 +32,7 @@
 
         <div class="p-4 flex flex-col items-center">
             <form action="/guess_hex" method="POST"
-                class="w-full flex flex-col justify-center items-center space-y-2 mb-2">
+                class="w-full flex flex-col justify-center items-center space-y-4 mb-2">
 
                 {% if not guessed_color %}
                 <div class="flex space-x-4">
@@ -45,7 +45,7 @@
                 </div>
                 {% endif %}
 
-                <p class="text-base text-gray-800 mb-2">{{ result if result }}</p>
+                <p class="text-base text-gray-800">{{ result if result }}</p>
 
                 <div class="flex space-x-4">
                     <button type="submit" name="action" value="next_color"
@@ -53,7 +53,7 @@
                         Next</button>
                     <button type="submit" name="action" value="restart"
                         class="w-28 inline-block py-2.5 px-6 rounded font-medium text-purple-900 border-purple-100 border bg-purple-50 py-3 px-6 rounded font-medium hover:bg-purple-100 transition ease-in-out duration-300">
-                        Reset
+                        Restart
                     </button>
                 </div>
             </form>
